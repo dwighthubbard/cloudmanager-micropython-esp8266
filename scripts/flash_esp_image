@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+import argparse
+import os
+import sys
+from cloudmanager_micropython_esp8266 import FIRMWARE_FILE
+
+
+FLASH_MODE = 'qio'
+FLASH_SIZE = '32m'
+
+
+def determine_default_serial_port():
+    if sys.platform in ['win32']:
+        return 'COM1'
+    elif sys.platform in ['osx']:
+        return '/dev/tty.usbserial'
+    port = '/dev/ttyUSB0'
+    if os.path.exists('/sys/bus/usb-serial/devices/'):
+        possible_devices = os.listdir('/sys/bus/usb-serial/devices/')
+        if 'ttyUSB0' in possible_devices:
+            return '/dev/ttyUSB0'
+        if len(possible_devices) == 1:
+            return possible_devices[0]
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', default=determine_default_serial_port(), help='Serial port the esp8266 device is connected to')
+    parser.add_argument('--baud', default='115200', help='Serial baud rate')
+    parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
+    args = parser.parse_args()
+
+    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size=32m --flash_mode=qio 0 {firmware_file}'.format(**vars(args))
+    print(command)
+    os.system(command)
+

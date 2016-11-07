@@ -87,3 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+/bin/*
+/cloudmanager_micropython_esp8266/firmware/*
+/micropython
