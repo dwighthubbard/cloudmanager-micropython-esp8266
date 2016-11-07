@@ -30,6 +30,9 @@ if __name__ == '__main__':
     parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
     args = parser.parse_args()
 
+    command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
+    print(command)
+    os.system(command)
     command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size=32m --flash_mode=qio 0 {firmware_file}'.format(**vars(args))
     print(command)
     os.system(command)

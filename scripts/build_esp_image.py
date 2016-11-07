@@ -54,14 +54,14 @@ def build_micropython_esp8266():
             os.chdir('mpy-cross')
             os.system('make')
 
-            os.chdir('unix')
+            os.chdir('../unix')
             os.system('make axtls')
             os.system('make')
 
             os.chdir('../esp8266')
+            os.system('export MICROPYPATH=modules;../unix/micropython -m upip install micropython-redis-cloudclient')
             os.system('make axtls')
             os.system('make')
-            os.system('export MICROPYPATH=modules;../unix/micropython -m upip install micropython-redis-cloudclient')
             os.system('cp -a build/firmware-combined.bin %s/cloudmanager_micropython_esp8266/firmware' % destdir)
 
 
