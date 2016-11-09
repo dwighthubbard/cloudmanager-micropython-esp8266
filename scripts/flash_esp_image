@@ -99,7 +99,7 @@ def send_settings_to_repl(setting_dict):
     line = ser.readline()
     print(line, end='')
     count = 0
-    while 'Cloud' not in line and 'WebREPL' not in line:
+    while 'Cloud' not in line and 'WebREPL' not in line and 'MicroPython' not in line:
         time.sleep(.5)
         line = ser.readline()
         count += 1
