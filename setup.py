@@ -7,7 +7,6 @@ if __name__ == '__main__':
         author='Dwight Hubbard',
         author_email="dwight@dwighthubbard.com",
         description='Cloudmanager esp8266 flash image',
-        long_description="""Utility to flash cloudmanager to esp8266""",
         name='cloudmanager-micropython-esp8266',
         include_package_data=True,
         package_data={
@@ -15,11 +14,12 @@ if __name__ == '__main__':
         },
         install_requires=['esptool', 'micropython-cloudmanager'],
         license='MIT',
+        long_description=open('README.rst').read(),
         maintainer='Dwight Hubbard',
         maintainer_email='dwight@dwighthubbard.com',
         packages=['cloudmanager_micropython_esp8266'],
         scripts=['scripts/flash_esp_image', 'scripts/esp_terminal'],
         url='https://github.com/dwighthubbard/cloudmanager-micropython-esp8266',
-        version='0.0.15',
+        version='0.0.16',
         zip_safe=False,
     )

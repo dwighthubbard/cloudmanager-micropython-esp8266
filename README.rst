@@ -1,14 +1,17 @@
-# Micropython ESP8266 Flash image with cloudmanager
+Micropython ESP8266 Flash image with cloudmanager
+=================================================
 
-This package provides a utility to flash an esp8266 board such as a nodemcu board
-with Micropython and configure the board to gister with a cloudmanager server
-instance.  
+This package provides a utility to flash an esp8266 board such as a nodemcu  or
+wemos d1 board with Micropython.  It will optionally configure networking and
+set up the board to run cloudmanager or webrepl at start.
 
-# Requirements
+Requirements
+============
 
 This Utility requires python 2.7.9+ and is installed using the python pip package manager.
 
-## Mac OSX requirements
+Mac OSX requirements
+--------------------
 
 On Mac OSX you may need to install the device driver for the usb to serial converter chip to interface with your board.
 
@@ -16,15 +19,18 @@ For NodeMCU boards, you will need to install the SiLabs [serial driver for the c
 
 For Wemos D1 boards, you will need to intall the [CH340 USB to UART driver](https://www.wemos.cc/downloads) ([direct link](https://www.wemos.cc/downloads/CH34x_Install_mac.zip))
 
-# Installation
+Installation
+============
 
     $ pip install cloudmanager_micropython_esp8266
     
-# Flashing a board
+Flashing a board
+================
 
 The **flash_esp_image** utility will flash a micropython image to the board and optionally configure it.
 
-## To just flash the image to the board, if the are no other serial devices installed.
+To just flash the image to the board, if the are no other serial devices installed
+----------------------------------------------------------------------------------
 
 This is the simplest option, the utility will attempt to guess the serial port the device is on and flash it.
 
@@ -56,7 +62,8 @@ This is the simplest option, the utility will attempt to guess the serial port t
 
 The board should now be flashed with micropython and the micropython repl prompt will be available on the serial port.
 
-## Flash the board and configure it to automatically start as a cloudmanager client
+Flash the board and configure it to automatically start as a cloudmanager client
+--------------------------------------------------------------------------------
 
 1. Plug the board into the usb port
 2. Run the **flash_esp_image** utility with the arguments to configure the network and cloudmanager.
@@ -84,7 +91,6 @@ The following example starts a cloudmanager server on the default port and tells
     Verifying just-written flash...
     Verifying 0x8734c (553804) bytes @ 0x00000000 in flash against /home/dwight/.virtualenvs/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin...
     -- verify OK (digest matched)
-    
     >>> 
     >>> import os
     >>> os.mkdir('etc')
@@ -108,7 +114,8 @@ The following example starts a cloudmanager server on the default port and tells
 
 It's now possible to use the **mbm** utility to upload/run code on the board.
 
-# Connecting to the serial terminal
+Connecting to the serial terminal
+=================================
 
 The **esp_terminal** command is a simple terminal program that will automatically connect the the micropython repl over usb/serial using the same device and port as the **flash_esp_image** utility.
 
