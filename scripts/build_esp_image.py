@@ -42,7 +42,9 @@ def build_esp_toolchain():
             # os.system('cp -a xtensa-lx106-elf/bin/* %s/bin' % destdir)
 
 
-def build_micropython_esp8266():
+def build_micropython_esp8266(install_packages=None):
+    if not install_packages:
+        install_packages = ['micropython-redis-cloudclient']
     destdir = os.getcwd()
     with working_directory():
         with tempfile.TemporaryDirectory() as tempdir:
@@ -59,7 +61,8 @@ def build_micropython_esp8266():
             os.system('make')
 
             os.chdir('../esp8266')
-            os.system('export MICROPYPATH=modules;../unix/micropython -m upip install micropython-redis-cloudclient')
+            for package in install_packages:
+                os.system('export MICROPYPATH=modules;../unix/micropython -m upip install %s' % package)
             os.system('make axtls')
             os.system('make')
             os.system('cp -a build/firmware-combined.bin %s/cloudmanager_micropython_esp8266/firmware' % destdir)

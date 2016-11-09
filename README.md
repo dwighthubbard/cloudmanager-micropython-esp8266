@@ -14,6 +14,8 @@ On Mac OSX you may need to install the device driver for the usb to serial conve
 
 For NodeMCU boards, you will need to install the SiLabs [serial driver for the chip](https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx) ([direct link](https://www.silabs.com/Support%20Documents/Software/Mac_OSX_VCP_Driver.zip)) 
 
+For Wemos D1 boards, you will need to intall the [CH340 USB to UART driver](https://www.wemos.cc/downloads) ([direct link](https://www.wemos.cc/downloads/CH34x_Install_mac.zip))
+
 # Installation
 
     $ pip install cloudmanager_micropython_esp8266
