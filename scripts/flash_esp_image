@@ -1,26 +1,100 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import argparse
 import os
+import serial
+import serial.tools.list_ports
 import sys
+import time
 from cloudmanager_micropython_esp8266 import FIRMWARE_FILE
 
 
 FLASH_MODE = 'qio'
 FLASH_SIZE = '32m'
+KNOWN_SERIAL_DEVICES = ['/dev/ttyUSB0', 'dev/cu.SLAB_USBtoUART', 'COM1']
+
+
+def com_port_devices():
+    return [port.device for port in serial.tools.list_ports.comports()]
 
 
 def determine_default_serial_port():
-    if sys.platform in ['win32']:
-        return 'COM1'
-    elif sys.platform in ['osx']:
-        return '/dev/tty.usbserial'
-    port = '/dev/ttyUSB0'
-    if os.path.exists('/sys/bus/usb-serial/devices/'):
-        possible_devices = os.listdir('/sys/bus/usb-serial/devices/')
-        if 'ttyUSB0' in possible_devices:
-            return '/dev/ttyUSB0'
-        if len(possible_devices) == 1:
-            return possible_devices[0]
+    device = KNOWN_SERIAL_DEVICES[0]
+    for device in com_port_devices():
+        if device in KNOWN_SERIAL_DEVICES:
+            return device
+    return device
+
+def send_settings_to_repl(setting_dict):
+    ser = serial.Serial(setting_dict['port'])
+    ser.baudrate = 115200
+    ser.bytesize = serial.EIGHTBITS  # number of bits per bytes
+    ser.parity = serial.PARITY_NONE  # set parity check: no parity
+    ser.stopbits = serial.STOPBITS_ONE  # number of stop bits
+    ser.timeout = 1  # non-block read
+    ser.xonxoff = False  # disable software flow control
+    ser.rtscts = False  # disable hardware (RTS/CTS) flow control
+    ser.dsrdtr = False  # disable hardware (DSR/DTR) flow control
+    ser.writeTimeout = 5  # timeout for write
+
+    time.sleep(2)
+    line = ser.readlines()
+    ser.write('\3')
+    line = ser.readline()
+    print(line, end='')
+    count = 0
+    while b'>>>' not in line:
+        ser.write('\r')
+        time.sleep(1)
+        line = ser.readline()
+        print(line, end='')
+        count += 1
+        if count > 15:
+            print('Board configuraton failed')
+            return
+
+    ser.write('import os\r')
+    print(ser.readline(), end='')
+    ser.write("os.mkdir('etc')\r")
+    print(ser.readline(), end='')
+    ser.write('from bootconfig.config import get, set\r')
+    print(ser.readline(), end='')
+    if setting_dict.get('wifi_ssid', None):
+        ser.write("set('{0}', '{1}')\r".format('wifi_ssid', setting_dict['wifi_ssid']))
+        print(ser.readline(), end='')
+    if setting_dict.get('wifi_password', None):
+        ser.write("set('{0}', '{1}')\r".format('wifi_password', setting_dict['wifi_password']))
+        print(ser.readline(), end='')
+    if setting_dict.get('cloudmanager_server', None):
+        ser.write("set('{0}', '{1}')\r".format('redis_server', setting_dict['cloudmanager_server']))
+        print(ser.readline(), end='')
+    if setting_dict.get('cloudmanager_port', None):
+        ser.write("set('{0}', '{1}')\r".format('redis_port', setting_dict['cloudmanager_port']))
+        print(ser.readline(), end='')
+    if setting_dict.get('name', None):
+        ser.write("set('{0}', '{1}')\r".format('name', setting_dict['name']))
+        print(ser.readline(), end='')
+    ser.write('import bootconfig.service\r')
+    print(ser.readline(), end='')
+    ser.write('bootconfig.service.autostart()\r')
+    print(ser.readline(), end='')
+    ser.write('import redis_cloudclient.service\r')
+    print(ser.readline(), end='')
+    ser.write('redis_cloudclient.service.autostart()\r')
+    print(ser.readline(), end='')
+    ser.write('import machine\r')
+    print(ser.readline(), end='')
+    ser.write('machine.reset()\r')
+    line = ser.readline()
+    print(line, end='')
+    count = 0
+    while 'Cloud' not in line:
+        time.sleep(1)
+        line = ser.readline()
+        count += 1
+        if count > 20:
+            break
+    print(ser.read_all(), end='')
 
 
 if __name__ == '__main__':
@@ -28,6 +102,12 @@ if __name__ == '__main__':
     parser.add_argument('--port', default=determine_default_serial_port(), help='Serial port the esp8266 device is connected to')
     parser.add_argument('--baud', default='115200', help='Serial baud rate')
     parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
+    settings = parser.add_argument_group('Settings')
+    settings.add_argument('--wifi_ssid', default=None, help='Connect to a specific wifi network')
+    settings.add_argument('--wifi_password', default=None, help='WPA passphrase for wifi')
+    settings.add_argument('--cloudmanager_server', default=None, help='Cloudmanager server to connect to')
+    settings.add_argument('--cloudmanager_port', default=None, help='Cloudmanager port number')
+    settings.add_argument('--name', default=None, help='The name of the board')
     args = parser.parse_args()
 
     command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
@@ -37,3 +117,5 @@ if __name__ == '__main__':
     print(command)
     os.system(command)
 
+    arguments = vars(args)
+    send_settings_to_repl(arguments)

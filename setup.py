@@ -13,13 +13,13 @@ if __name__ == '__main__':
         package_data={
             'cloudmanager_micropython_esp8266': ['firmware/*.bin'],
         },
-        install_requires=['esptool'],
+        install_requires=['esptool', 'micropython-cloudmanager'],
         license='MIT',
         maintainer='Dwight Hubbard',
         maintainer_email='dwight@dwighthubbard.com',
         packages=['cloudmanager_micropython_esp8266'],
         scripts=['scripts/flash_esp_image'],
         url='https://github.com/dhubbard/cloudmanager-micropython-esp8266',
-        version='0.0.5',
+        version='0.0.8',
         zip_safe=False,
     )

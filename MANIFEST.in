@@ -1,0 +1,2 @@
+include README.md
+include cloudmanager_micropython_esp8266/firmware/*.bin
