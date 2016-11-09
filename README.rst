@@ -13,11 +13,12 @@ This Utility requires python 2.7.9+ and is installed using the python pip packag
 Mac OSX requirements
 --------------------
 
-On Mac OSX you may need to install the device driver for the usb to serial converter chip to interface with your board.
+On Mac OSX you may need to install the device driver for the usb to serial converter chip
+to interface with your board.
 
-For NodeMCU boards, you will need to install the SiLabs `serial driver for the chip <https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx>`_ (`direct link<https://www.silabs.com/Support%20Documents/Software/Mac_OSX_VCP_Driver.zip>`_)
+For NodeMCU boards, you will need to install the SiLabs [serial driver for the chip](https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx) ([direct link](https://www.silabs.com/Support%20Documents/Software/Mac_OSX_VCP_Driver.zip))
 
-For Wemos D1 boards, you will need to intall the `CH340 USB to UART driver <https://www.wemos.cc/downloads>`_ (`direct link <https://www.wemos.cc/downloads/CH34x_Install_mac.zip>`_)
+For Wemos D1 boards, you will need to intall the [CH340 USB to UART driver](https://www.wemos.cc/downloads) ([direct link](https://www.wemos.cc/downloads/CH34x_Install_mac.zip))
 
 Installation
 ============
@@ -39,7 +40,7 @@ To just flash the image to the board, if the are no other serial devices install
 This is the simplest option, the utility will attempt to guess the serial port the device is on and flash it.
 
 1. Plug the board into the usb port
-2. Run the **flash_esp_image** utility without arguments.  
+2. Run the **flash_esp_image** utility without arguments.
 
 .. code-block:: console
 
@@ -50,7 +51,7 @@ This is the simplest option, the utility will attempt to guess the serial port t
     Running Cesanta flasher stub...
     Erasing flash (this may take a while)...
     Erase took 9.1 seconds
-    esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --verify --flash_size=32m --flash_mode=qio 0 /home/dwight/.virtualenvs/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin
+    esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --verify --flash_size=32m --flash_mode=qio 0 /tmp/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin
     esptool.py v1.2.1
     Connecting...
     Running Cesanta flasher stub...
@@ -60,7 +61,7 @@ This is the simplest option, the utility will attempt to guess the serial port t
     Wrote 557056 bytes at 0x0 in 48.3 seconds (92.3 kbit/s)...
     Leaving...
     Verifying just-written flash...
-    Verifying 0x8734c (553804) bytes @ 0x00000000 in flash against /home/dwight/.virtualenvs/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin...
+    Verifying 0x8734c (553804) bytes @ 0x00000000 in flash against /tmp/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin...
     -- verify OK (digest matched)
     $
 
@@ -85,7 +86,7 @@ The following example starts a cloudmanager server on the default port and tells
     Running Cesanta flasher stub...
     Erasing flash (this may take a while)...
     Erase took 9.0 seconds
-    esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --verify --flash_size=32m --flash_mode=qio 0 /home/dwight/.virtualenvs/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin
+    esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --verify --flash_size=32m --flash_mode=qio 0 /tmp/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin
     esptool.py v1.2.1
     Connecting...
     Running Cesanta flasher stub...
@@ -94,7 +95,7 @@ The following example starts a cloudmanager server on the default port and tells
     Wrote 557056 bytes at 0x0 in 48.3 seconds (92.3 kbit/s)...
     Leaving...
     Verifying just-written flash...
-    Verifying 0x8734c (553804) bytes @ 0x00000000 in flash against /home/dwight/.virtualenvs/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin...
+    Verifying 0x8734c (553804) bytes @ 0x00000000 in flash against /tmp/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin...
     -- verify OK (digest matched)
     >>> 
     >>> import os
