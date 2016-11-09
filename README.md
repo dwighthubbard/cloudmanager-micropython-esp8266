@@ -8,6 +8,12 @@ instance.
 
 This Utility requires python 2.7.9+ and is installed using the python pip package manager.
 
+## Mac OSX requirements
+
+On Mac OSX you may need to install the device driver for the usb to serial converter chip to interface with your board.
+
+For NodeMCU boards, you will need to install the SiLabs [serial driver for the chip](https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx) ([direct link](https://www.silabs.com/Support%20Documents/Software/Mac_OSX_VCP_Driver.zip)) 
+
 # Installation
 
     $ pip install cloudmanager_micropython_esp8266

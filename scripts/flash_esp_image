@@ -74,14 +74,21 @@ def send_settings_to_repl(setting_dict):
     if setting_dict.get('name', None):
         ser.write("set('{0}', '{1}')\r".format('name', setting_dict['name']))
         print(ser.readline(), end='')
-    ser.write('import bootconfig.service\r')
-    print(ser.readline(), end='')
-    ser.write('bootconfig.service.autostart()\r')
-    print(ser.readline(), end='')
-    ser.write('import redis_cloudclient.service\r')
-    print(ser.readline(), end='')
-    ser.write('redis_cloudclient.service.autostart()\r')
-    print(ser.readline(), end='')
+    if 'bootconfig' in setting_dict['services']:
+        ser.write('import bootconfig.service\r')
+        print(ser.readline(), end='')
+        ser.write('bootconfig.service.autostart()\r')
+        print(ser.readline(), end='')
+    if 'cloudclient' in setting_dict['services']:
+        ser.write('import redis_cloudclient.service\r')
+        print(ser.readline(), end='')
+        ser.write('redis_cloudclient.service.autostart()\r')
+        print(ser.readline(), end='')
+    if 'webrepl' in setting_dict['services']:
+        ser.write('with open("main.py", "w") as fh:\r')
+        print(ser.readline(), end='')
+        ser.write('fh.write("import webrepl;webrepl.start()")\r\r')
+        print(ser.readline(), end='')
     ser.write('import machine\r')
     print(ser.readline(), end='')
     ser.write('machine.reset()\r')
@@ -100,7 +107,7 @@ def send_settings_to_repl(setting_dict):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=determine_default_serial_port(), help='Serial port the esp8266 device is connected to')
-    parser.add_argument('--baud', default='115200', help='Serial baud rate')
+    parser.add_argument('--baud', default='115200', choices=['9600', '115200'], help='Serial baud rate')
     parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
     settings = parser.add_argument_group('Settings')
     settings.add_argument('--wifi_ssid', default=None, help='Connect to a specific wifi network')
@@ -108,8 +115,16 @@ if __name__ == '__main__':
     settings.add_argument('--cloudmanager_server', default=None, help='Cloudmanager server to connect to')
     settings.add_argument('--cloudmanager_port', default=None, help='Cloudmanager port number')
     settings.add_argument('--name', default=None, help='The name of the board')
+    settings.add_argument(
+        '--enable_service', dest='services', nargs='?', action='append',
+        choices=['bootconfig', 'cloudclient', 'webrepl'],
+        help='Services to enable'
+    )
     args = parser.parse_args()
-
+    if not args.services:
+        args.services = ['bootconfig', 'cloudclient']
+    print(args)
+    sys.exit(0)
     command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
     print(command)
     os.system(command)
