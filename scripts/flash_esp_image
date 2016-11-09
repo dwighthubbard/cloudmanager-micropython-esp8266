@@ -7,24 +7,12 @@ import serial
 import serial.tools.list_ports
 import sys
 import time
-from cloudmanager_micropython_esp8266 import FIRMWARE_FILE
+from cloudmanager_micropython_esp8266 import FIRMWARE_FILE, determine_default_serial_port
 
 
 FLASH_MODE = 'qio'
 FLASH_SIZE = '32m'
-KNOWN_SERIAL_DEVICES = ['/dev/ttyUSB0', 'dev/cu.SLAB_USBtoUART', 'COM1']
 
-
-def com_port_devices():
-    return [port.device for port in serial.tools.list_ports.comports()]
-
-
-def determine_default_serial_port():
-    device = KNOWN_SERIAL_DEVICES[0]
-    for device in com_port_devices():
-        if device in KNOWN_SERIAL_DEVICES:
-            return device
-    return device
 
 def send_settings_to_repl(setting_dict):
     ser = serial.Serial(setting_dict['port'])
@@ -89,10 +77,13 @@ def send_settings_to_repl(setting_dict):
         ser.write('import webrepl_setup\r')
         print(ser.readline(), end='')
         ser.write('e\r')
+        time.sleep(1)
         print(ser.readline(), end='')
         ser.write(args.webrepl_password + '\r')
+        time.sleep(1)
         print(ser.readline(), end='')
         ser.write(args.webrepl_password + '\r')
+        time.sleep(1)
         print(ser.readline(), end='')
         ser.write('y\r')
         print(ser.readline(), end='')
