@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import argparse
+import getpass
 import os
 import serial
 import serial.tools.list_ports
@@ -85,10 +86,17 @@ def send_settings_to_repl(setting_dict):
         ser.write('redis_cloudclient.service.autostart()\r')
         print(ser.readline(), end='')
     if 'webrepl' in setting_dict['services']:
-        ser.write('with open("main.py", "w") as fh:\r')
+        ser.write('import webrepl_setup\r')
         print(ser.readline(), end='')
-        ser.write('fh.write("import webrepl;webrepl.start()")\r\r')
+        ser.write('e\r')
         print(ser.readline(), end='')
+        ser.write(args.webrepl_password + '\r')
+        print(ser.readline(), end='')
+        ser.write(args.webrepl_password + '\r')
+        print(ser.readline(), end='')
+        ser.write('y\r')
+        print(ser.readline(), end='')
+
     ser.write('import machine\r')
     print(ser.readline(), end='')
     ser.write('machine.reset()\r')
@@ -123,8 +131,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not args.services:
         args.services = ['bootconfig', 'cloudclient']
-    print(args)
-    sys.exit(0)
+
+    if 'webrepl' in args.services:
+        args.webrepl_password = getpass.getpass('WebRepl Password: ')
+
     command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
     print(command)
     os.system(command)
