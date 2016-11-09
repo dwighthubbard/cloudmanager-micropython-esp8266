@@ -78,27 +78,29 @@ def send_settings_to_repl(setting_dict):
         print(ser.readline(), end='')
         ser.write('e\r')
         print(ser.readline(), end='')
-        time.sleep(1)
+        time.sleep(.5)
         print(ser.readline(), end='')
         ser.write(args.webrepl_password + '\r')
         print(ser.readline(), end='')
-        time.sleep(1)
+        time.sleep(.5)
         print(ser.readline(), end='')
         ser.write(args.webrepl_password + '\r')
         print(ser.readline(), end='')
-        time.sleep(1)
+        time.sleep(.5)
         print(ser.readline(), end='')
         ser.write('n\r')
+        time.sleep(.5)
         print(ser.readline(), end='')
 
+    print('Resetting board')
     ser.write('import machine\r')
     print(ser.readline(), end='')
     ser.write('machine.reset()\r')
     line = ser.readline()
     print(line, end='')
     count = 0
-    while 'Cloud' not in line:
-        time.sleep(1)
+    while 'Cloud' not in line and 'WebREPL' not in line:
+        time.sleep(.5)
         line = ser.readline()
         count += 1
         if count > 20:
