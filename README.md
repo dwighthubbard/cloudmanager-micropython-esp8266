@@ -108,3 +108,12 @@ The following example starts a cloudmanager server on the default port and tells
 
 It's now possible to use the **mbm** utility to upload/run code on the board.
 
+# Connecting to the serial terminal
+
+The **esp_terminal** command is a simple terminal program that will automatically connect the the micropython repl over usb/serial using the same device and port as the **flash_esp_image** utility.
+
+    $ esp_terminal
+    MicroPython v1.8.5-124-gbc4441a on 2016-11-06; ESP module with ESP8266
+    Type "help()" for more information.
+    >>>
+ 
