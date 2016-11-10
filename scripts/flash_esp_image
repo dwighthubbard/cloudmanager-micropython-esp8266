@@ -134,7 +134,7 @@ if __name__ == '__main__':
     command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
     print(command)
     os.system(command)
-    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size=32m --flash_mode=qio 0 {firmware_file}'.format(**vars(args))
+    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size=detect --flash_mode=qio 0 {firmware_file}'.format(**vars(args))
     print(command)
     os.system(command)
 
