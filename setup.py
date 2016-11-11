@@ -23,6 +23,6 @@ if __name__ == '__main__':
         packages=['cloudmanager_micropython_esp8266'],
         scripts=['scripts/flash_esp_image', 'scripts/esp_terminal'],
         url='https://github.com/dwighthubbard/cloudmanager-micropython-esp8266',
-        version='0.0.23',
-        zip_safe=False,
+        version='1.8.5dev11',
+        zip_safe=False
     )
