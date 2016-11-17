@@ -2,6 +2,7 @@
 from __future__ import print_function
 import argparse
 import getpass
+import netifaces
 import os
 import serial
 import serial.tools.list_ports
@@ -12,6 +13,32 @@ from cloudmanager_micropython_esp8266 import FIRMWARE_FILE, determine_default_se
 
 FLASH_MODE = 'qio'
 FLASH_SIZE = '32m'
+FLASH_MODE_HUZZAH = """Put your device into flash mode, using the following steps
+   * Press and hold the flash button on the top of the board
+   * Press and release the reset button on the top of the board
+   * Release the flash button on the top of the board
+
+On completion of these steps the red led on the board should be lit.
+"""
+
+
+def get_service_addresses():
+    listen_addresses = []
+    for interface in netifaces.interfaces():
+        if interface in ['docker0']:
+            continue
+        addresses = netifaces.ifaddresses(interface).get(netifaces.AF_INET, [])
+        # Netifaces is returning funny values for ipv6 addresses, disabling for now
+        # addresses += netifaces.ifaddresses(interface).get(netifaces.AF_INET6, [])
+        if not addresses:
+            continue
+        for address in addresses:
+            if 'peer' in address.keys():
+                continue
+            if address['addr'] in ['::1', '127.0.0.1']:
+                continue
+            listen_addresses.append(address['addr'])
+    return listen_addresses
 
 
 def send_settings_to_repl(setting_dict):
@@ -112,6 +139,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=determine_default_serial_port(), help='Serial port the esp8266 device is connected to')
     parser.add_argument('--baud', default='115200', choices=['9600', '115200'], help='Serial baud rate')
+    parser.add_argument('--board', default='nodemcu', choices=['nodemcu', 'wemosd1', 'huzzah'], help='Type of board being flashed')
+    parser.add_argument('--skip_erase', dest='erase', default=True, action='store_false', help='Skip the flash erase step')
     parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
     settings = parser.add_argument_group('Settings')
     settings.add_argument('--wifi_ssid', default=None, help='Connect to a specific wifi network')
@@ -125,16 +154,32 @@ if __name__ == '__main__':
         help='Services to enable'
     )
     args = parser.parse_args()
+
+    args.flash_mode = 'qio'
+    args.flash_size = 'detect'
+
+    if args.board in ['huzzah']:
+        print(FLASH_MODE_HUZZAH)
+        input('Press enter to continue')
+
     if not args.services:
         args.services = ['bootconfig', 'cloudclient']
 
     if 'webrepl' in args.services:
         args.webrepl_password = getpass.getpass('WebRepl Password: ')
 
-    command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
-    print(command)
-    os.system(command)
-    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size=detect --flash_mode=qio 0 {firmware_file}'.format(**vars(args))
+    if 'cloudclient' in args.services:
+        if args.cloudmanager_server is None:
+            args.cloudmanager_server = get_service_addresses()[0]
+        if args.cloudmanager_port is None:
+            args.cloudmanager_port = 18266
+
+    if args.erase:
+        command = 'esptool.py --port {port} --baud {baud} erase_flash'.format(**vars(args))
+        print(command)
+        os.system(command)
+
+    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**vars(args))
     print(command)
     os.system(command)
 
