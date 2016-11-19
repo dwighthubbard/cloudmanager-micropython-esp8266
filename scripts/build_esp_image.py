@@ -42,7 +42,7 @@ def build_esp_toolchain():
             # os.system('cp -a xtensa-lx106-elf/bin/* %s/bin' % destdir)
 
 
-def build_micropython_esp8266(install_packages=None):
+def build_micropython_esp8266(install_packages=None, release=None):
     if not install_packages:
         install_packages = ['micropython-redis-cloudclient']
     destdir = os.getcwd()
@@ -50,6 +50,8 @@ def build_micropython_esp8266(install_packages=None):
         with tempfile.TemporaryDirectory() as tempdir:
             os.chdir(tempdir)
             os.system('git clone --recursive https://github.com/micropython/micropython.git')
+            if release:
+                os.system('git checkout -b {0} {0}'.format(release))
             os.chdir('micropython')
             os.system('git submodule update --init')
 
@@ -68,7 +70,7 @@ def build_micropython_esp8266(install_packages=None):
             os.system('cp -a build/firmware-combined.bin %s/cloudmanager_micropython_esp8266/firmware' % destdir)
 
 
-def build():
+def build(release=None):
     bin_directory = os.path.join(os.getcwd(), 'xtensa-lx106-elf/bin')
     os.environ['PATH'] = bin_directory + ':' + os.environ.get('PATH', '')
 
@@ -80,10 +82,10 @@ def build():
         build_esp_toolchain()
 
     # Build the image
-    build_micropython_esp8266()
+    build_micropython_esp8266(release=None)
 
     # Add modules to build image
 
 
 if __name__ == '__main__':
-    build()
+    build(release='v1.8.6')
