@@ -120,17 +120,23 @@ def send_settings_to_repl(setting_dict):
         print(ser.readline(), end='')
 
     print('Resetting board')
+    # ser.write('import sys\r')
+    # print(ser.readline(), end='')
+    # ser.write('sys.exit()\r')
+    # print(ser.readline(), end='')
     ser.write('import machine\r')
     print(ser.readline(), end='')
     ser.write('machine.reset()\r')
     line = ser.readline()
+    ser.write("print('Resetting')\r")
+    line = ser.readline()
     print(line, end='')
     count = 0
-    while 'Cloud' not in line and 'WebREPL' not in line and 'MicroPython' not in line:
+    while 'Cloud' not in line and 'WebREPL' not in line and 'MicroPython' not in line and '>>>' not in line:
         time.sleep(.5)
         line = ser.readline()
         count += 1
-        if count > 20:
+        if count > 10:
             break
     print(ser.read_all(), end='')
 
@@ -138,7 +144,7 @@ def send_settings_to_repl(setting_dict):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=determine_default_serial_port(), help='Serial port the esp8266 device is connected to')
-    parser.add_argument('--baud', default='115200', choices=['9600', '115200'], help='Serial baud rate')
+    parser.add_argument('--baud', default='115200', choices=['9600', '115200', '460800', '921600'], help='Serial baud rate, choices: 9600, 115200 460800, 921600')
     parser.add_argument('--board', default='nodemcu', choices=['nodemcu', 'wemosd1', 'huzzah'], help='Type of board being flashed')
     parser.add_argument('--skip_erase', dest='erase', default=True, action='store_false', help='Skip the flash erase step')
     parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
@@ -151,11 +157,17 @@ if __name__ == '__main__':
     settings.add_argument(
         '--enable_service', dest='services', nargs='?', action='append',
         choices=['bootconfig', 'cloudclient', 'webrepl'],
-        help='Services to enable'
+        help='Services to enable, default=[bootconfig, cloudclient]'
+    )
+    settings.add_argument(
+        '--disable_service', dest='disable_services', nargs='?', action='append',
+        choices=['bootconfig', 'cloudclient', 'webrepl'],
+        help='Services to disable'
     )
     args = parser.parse_args()
 
     args.flash_mode = 'qio'
+
     args.flash_size = 'detect'
 
     if args.board in ['huzzah']:
@@ -164,6 +176,10 @@ if __name__ == '__main__':
 
     if not args.services:
         args.services = ['bootconfig', 'cloudclient']
+
+    if args.disable_services:
+        for service in args.disable_services:
+            args.services.remove(service)
 
     if 'webrepl' in args.services:
         args.webrepl_password = getpass.getpass('WebRepl Password: ')
