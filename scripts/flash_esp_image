@@ -54,7 +54,7 @@ def get_service_addresses():
 
 def send_settings_to_repl(setting_dict, baudrate=115200):
     ser = serial.Serial(setting_dict['port'])
-    ser.baudrate = baudrate
+    ser.baudrate = int(baudrate)
     ser.bytesize = serial.EIGHTBITS  # number of bits per bytes
     ser.parity = serial.PARITY_NONE  # set parity check: no parity
     ser.stopbits = serial.STOPBITS_ONE  # number of stop bits
@@ -84,7 +84,7 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
         line = ser.readline()
         print(line, end='')
         count += 1
-        if count > 50:
+        if count > 60:
             raise NoResponse('Board configuraton failed')
 
     line = ser.readline()
@@ -244,12 +244,13 @@ if __name__ == '__main__':
 
     arguments = vars(args)
     attempt = 1
-    for baudrate in [args.baud, '115200'] + BAUD_RATES:
+    for baudrate in ['115200', '115200', '9600', '9600'] + BAUD_RATES:
         try:
+            header('Sending settings at %s baud' % baudrate)
             send_settings_to_repl(arguments, baudrate=baudrate)
             sys.exit(0)
         except NoResponse:
-            prompt('### Press the reset button on your board and press [enter] ###')
+            # prompt('### Press the reset button on your board and press [enter] ###')
             continue
         except FlashFailed:
             attempt += 1
