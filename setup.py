@@ -22,8 +22,8 @@ if __name__ == '__main__':
         maintainer='Dwight Hubbard',
         maintainer_email='dwight@dwighthubbard.com',
         packages=['cloudmanager_micropython_esp8266'],
-        scripts=['scripts/flash_esp_image', 'scripts/esp_terminal'],
+        scripts=['scripts/flash_esp_image', 'scripts/esp_terminal', 'scripts/configure_esp_image'],
         url='https://github.com/dwighthubbard/cloudmanager-micropython-esp8266',
-        version='1.8.6dev5',
+        version='1.8.6dev40',
         zip_safe=False
     )

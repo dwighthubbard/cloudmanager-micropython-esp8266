@@ -2,7 +2,6 @@
 from __future__ import print_function
 import argparse
 import getpass
-import logging
 import netifaces
 import os
 import serial
@@ -20,16 +19,9 @@ FLASH_MODE_HUZZAH = """Put your device into flash mode, using the following step
 
 On completion of these steps the red led on the board should be lit.
 """
-BAUD_RATES = ['9600', '115200', '460800', '921600']
-
-logger = logging.getLogger('flash_esp_image')
 
 
 class NoResponse(Exception):
-    pass
-
-
-class FlashFailed(Exception):
     pass
 
 
@@ -52,9 +44,9 @@ def get_service_addresses():
     return listen_addresses
 
 
-def send_settings_to_repl(setting_dict, baudrate=115200):
+def send_settings_to_repl(setting_dict):
     ser = serial.Serial(setting_dict['port'])
-    ser.baudrate = baudrate
+    ser.baudrate = 115200
     ser.bytesize = serial.EIGHTBITS  # number of bits per bytes
     ser.parity = serial.PARITY_NONE  # set parity check: no parity
     ser.stopbits = serial.STOPBITS_ONE  # number of stop bits
@@ -62,35 +54,25 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
     ser.xonxoff = False  # disable software flow control
     ser.rtscts = False  # disable hardware (RTS/CTS) flow control
     ser.dsrdtr = False  # disable hardware (DSR/DTR) flow control
-    ser.writeTimeout = 2  # timeout for write
+    ser.writeTimeout = 5  # timeout for write
 
-    # line = ser.readlines()
-    ser.write('\3\4\r')
-
-    if not setting_dict.get('wifi_ssid', None):
-        return
-
-    time.sleep(.4)
+    time.sleep(2)
+    line = ser.readlines()
+    ser.write('\3')
     line = ser.readline()
-    logger.debug(line, end='')
+    print(line, end='')
     count = 0
-    ser.write('\r')
     while b'>>>' not in line:
-        if b'Fatal exception' in line:
-            raise FlashFailed('Flashing of board failed')
-        # if count % 10:
-        #     ser.write('\r')
-        # time.sleep(.1)
+        ser.write('\r')
+        time.sleep(1)
         line = ser.readline()
         print(line, end='')
         count += 1
-        if count > 50:
+        if count > 10:
             raise NoResponse('Board configuraton failed')
 
-    line = ser.readline()
-    while b'>>>' in line:
-        line = ser.readline()
-    print(line, end='')
+    if not setting_dict.get('wifi_ssid', None):
+        return
 
     ser.write('import os\r')
     print(ser.readline(), end='')
@@ -142,56 +124,33 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
         time.sleep(.5)
         print(ser.readline(), end='')
 
-    time.sleep(1)
     print('Resetting board')
-    ser.write('\3\4\r')
-    print(ser.readline(), end='')
-    # ser.write('import machine\r')
+    # ser.write('import sys\r')
     # print(ser.readline(), end='')
-    # ser.write('machine.reset()\r')
-    # line = ser.readline()
-    # ser.write("print('Resetting')\r")
+    # ser.write('sys.exit()\r')
+    # print(ser.readline(), end='')
+    ser.write('import machine\r')
+    print(ser.readline(), end='')
+    ser.write('machine.reset()\r')
+    line = ser.readline()
+    ser.write("print('Resetting')\r")
     line = ser.readline()
     print(line, end='')
     count = 0
     while 'Cloud' not in line and 'WebREPL' not in line and 'MicroPython' not in line and '>>>' not in line:
-        time.sleep(.1)
+        time.sleep(.5)
         line = ser.readline()
         count += 1
-        if count > 50:
+        if count > 10:
             break
     print(ser.read_all(), end='')
-
-
-def header(message):
-    print('*' * 80)
-    print(message)
-    print('*' * 80)
-
-
-def prompt(message):
-    if sys.version_info.major == 2:
-        return raw_input(message)
-    return input(message)
-
-
-def erase_flash():
-    command = 'esptool.py --port {port} --baud 9600 erase_flash'.format(**vars(args))
-    logger.debug(command)
-    result = os.popen(command).read()
-    # os.system(command)
-    # time.sleep(1)
-    logger.debug(result)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=determine_default_serial_port(), help='Serial port the esp8266 device is connected to')
-    parser.add_argument('--baud', default='115200', choices=BAUD_RATES, help='Serial baud rate, choices: 9600, 115200 460800, 921600')
+    parser.add_argument('--baud', default='115200', choices=['9600', '115200', '460800', '921600'], help='Serial baud rate, choices: 9600, 115200 460800, 921600')
     parser.add_argument('--board', default='nodemcu', choices=['nodemcu', 'wemosd1', 'huzzah'], help='Type of board being flashed')
-    parser.add_argument('--flash_mode', default='qio', choices=['qio', 'dio'], help='Flash mode')
-    parser.add_argument('--skip_erase', dest='erase', default=True, action='store_false', help='Skip the flash erase step')
-    parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
     settings = parser.add_argument_group('Settings')
     settings.add_argument('--wifi_ssid', default=None, help='Connect to a specific wifi network')
     settings.add_argument('--wifi_password', default=None, help='WPA passphrase for wifi')
@@ -210,12 +169,6 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    args.flash_size = 'detect'
-
-    if args.board in ['huzzah']:
-        print(FLASH_MODE_HUZZAH)
-        input('Press enter to continue')
-
     if not args.services:
         args.services = ['bootconfig', 'cloudclient']
 
@@ -232,31 +185,5 @@ if __name__ == '__main__':
         if args.cloudmanager_port is None:
             args.cloudmanager_port = 18266
 
-    if args.erase:
-        header('Erasing flash')
-        erase_flash()
-        print('Done\n')
-
-    header('Flashing board')
-    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**vars(args))
-    logger.debug(command)
-    os.system(command)
-
     arguments = vars(args)
-    attempt = 1
-    for baudrate in [args.baud, '115200'] + BAUD_RATES:
-        try:
-            send_settings_to_repl(arguments, baudrate=baudrate)
-            sys.exit(0)
-        except NoResponse:
-            prompt('### Press the reset button on your board and press [enter] ###')
-            continue
-        except FlashFailed:
-            attempt += 1
-            print('\n### Flashing failed with flash mode set to %s' % arguments['flash_mode'], end='')
-            arguments['flash_mode'] = 'qio' if arguments['flash_mode'] == 'dio' else 'dio'
-            print(', retrying with flash mode set to %s ###\n' % arguments['flash_mode'])
-            header('Flashing board, attempt #%d' % attempt)
-            command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**arguments)
-            logger.debug(command)
-            os.system(command)
+    send_settings_to_repl(arguments)
