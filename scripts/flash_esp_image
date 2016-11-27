@@ -9,6 +9,7 @@ import serial
 import serial.tools.list_ports
 import sys
 import time
+from collections import defaultdict
 from cloudmanager_micropython_esp8266 import FIRMWARE_FILE, determine_default_serial_port
 
 
@@ -67,9 +68,6 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
     # line = ser.readlines()
     ser.write('\3\4\r')
 
-    if not setting_dict.get('wifi_ssid', None):
-        return
-
     time.sleep(.4)
     line = ser.readline()
     logger.debug(line, end='')
@@ -92,11 +90,14 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
         line = ser.readline()
     print(line, end='')
 
+    if not setting_dict['wifi_ssid']:
+        return
+
     ser.write('import os\r')
     print(ser.readline(), end='')
     ser.write("os.mkdir('etc')\r")
     print(ser.readline(), end='')
-    ser.write('from bootconfig.config import get, set\r')
+    ser.write('from bootconfig.config import set\r')
     print(ser.readline(), end='')
     if setting_dict.get('wifi_ssid', None):
         ser.write("set('{0}', '{1}')\r".format('wifi_ssid', setting_dict['wifi_ssid']))
@@ -140,6 +141,11 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
         print(ser.readline(), end='')
         ser.write('n\r')
         time.sleep(.5)
+        print(ser.readline(), end='')
+    if setting_dict['wifi_ssid'] and setting_dict['wifi_password']:
+        ser.write('from bootconfig.device import configure_device\r')
+        print(ser.readline(), end='')
+        ser.write('configure_device()\r')
         print(ser.readline(), end='')
 
     time.sleep(1)
@@ -201,7 +207,7 @@ if __name__ == '__main__':
     settings.add_argument(
         '--enable_service', dest='services', nargs='?', action='append',
         choices=['bootconfig', 'cloudclient', 'webrepl'],
-        help='Services to enable, default=[bootconfig, cloudclient]'
+        help='Services to enable, default=[cloudclient]'
     )
     settings.add_argument(
         '--disable_service', dest='disable_services', nargs='?', action='append',
@@ -217,7 +223,9 @@ if __name__ == '__main__':
         input('Press enter to continue')
 
     if not args.services:
-        args.services = ['bootconfig', 'cloudclient']
+        args.services = []
+        if args.wifi_ssid:
+            args.services.append('cloudclient')
 
     if args.disable_services:
         for service in args.disable_services:
@@ -242,9 +250,10 @@ if __name__ == '__main__':
     logger.debug(command)
     os.system(command)
 
-    arguments = vars(args)
+    arguments = defaultdict(lambda: None)
+    arguments.update(vars(args))
     attempt = 1
-    for baudrate in ['115200', '115200', '9600', '9600'] + BAUD_RATES:
+    for baudrate in [args.baud, args.baud, '115200', '115200', '9600', '9600'] + BAUD_RATES:
         try:
             header('Sending settings at %s baud' % baudrate)
             send_settings_to_repl(arguments, baudrate=baudrate)
@@ -261,3 +270,4 @@ if __name__ == '__main__':
             command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**arguments)
             logger.debug(command)
             os.system(command)
+        print('')
