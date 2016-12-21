@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+import sys
 from serial.tools.miniterm import main
 from cloudmanager_micropython_esp8266 import determine_default_serial_port
 
 
 if __name__ == '__main__':
     # main(default_port=determine_default_serial_port(), default_baudrate=74880)
+    if len(sys.argv) == 1:
+        sys.argv.append('--raw')
     main(default_port=determine_default_serial_port(), default_baudrate=115200)
 
