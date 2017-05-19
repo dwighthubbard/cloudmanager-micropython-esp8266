@@ -246,7 +246,7 @@ if __name__ == '__main__':
         print('Done\n')
 
     header('Flashing board')
-    command = 'esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**vars(args))
+    command = 'python2 esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**vars(args))
     logger.debug(command)
     os.system(command)
 

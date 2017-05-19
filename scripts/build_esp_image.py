@@ -75,7 +75,7 @@ def build(release=None):
     os.environ['PATH'] = bin_directory + ':' + os.environ.get('PATH', '')
 
     # Install build requirements
-    # install_build_requirements()
+    install_build_requirements()
 
     # Build Toolchain
     if not os.path.exists('xtensa-lx106-elf/bin/esptool.py'):
