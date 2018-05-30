@@ -14,6 +14,19 @@ def working_directory():
         os.chdir(curdir)
 
 
+def header(message, width=80, horizspace=True):
+    if horizspace:
+        print('')
+    if len(message) > 76:
+        print('*' * 80)
+        print(message)
+        print('*' * 80)
+        return
+
+    width -= 4
+    print(f'# {message} {"#" * width}')
+
+
 def clean_micropython():
     with working_directory():
         os.chdir('micropython')
@@ -25,6 +38,7 @@ def install_build_requirements():
 
 
 def build_esp_toolchain():
+    header('Building ESP toolchain')
     destdir = os.getcwd()
     with working_directory():
         with tempfile.TemporaryDirectory() as tempdir:
@@ -34,6 +48,7 @@ def build_esp_toolchain():
             os.system('git clone --recursive https://github.com/pfalcon/esp-open-sdk.git')
             os.chdir('esp-open-sdk')
             os.system('make clean')
+
             os.system('git pull')
             os.system('git submodule sync')
             os.system('git submodule update --init')
@@ -42,31 +57,43 @@ def build_esp_toolchain():
             # os.system('cp -a xtensa-lx106-elf/bin/* %s/bin' % destdir)
 
 
-def build_micropython_esp8266(install_packages=None, release=None):
+def build_micropython_esp8266(install_packages=None, release=None, unix=True):
     if not install_packages:
         install_packages = ['micropython-redis-cloudclient']
     destdir = os.getcwd()
     with working_directory():
         with tempfile.TemporaryDirectory() as tempdir:
             os.chdir(tempdir)
+            header('Cloning git repos')
             os.system('git clone --recursive https://github.com/micropython/micropython.git')
             if release:
                 os.system('git checkout -b {0} {0}'.format(release))
             os.chdir('micropython')
             os.system('git submodule update --init')
 
+            os.system('ls -lh')
+
+            header('Building bytecode compiler')
             os.chdir('mpy-cross')
             os.system('make')
 
-            os.chdir('../unix')
+            if unix:
+                header('Building micropython unix')
+                os.chdir(os.path.join(tempdir, 'micropython/ports/unix'))
+                os.system('make axtls')
+                os.system('make')
+
+            os.chdir(os.path.join(tempdir, 'micropython/ports/esp8266'))
+            header('Installing firmware extra packages')
+            for package in install_packages:
+                print(f'Installing {package}')
+                os.system('export MICROPYPATH=modules;../unix/micropython -m upip install %s' % package)
+
+            header('Building esp8266 firmware')
             os.system('make axtls')
             os.system('make')
 
-            os.chdir('../esp8266')
-            for package in install_packages:
-                os.system('export MICROPYPATH=modules;../unix/micropython -m upip install %s' % package)
-            os.system('make axtls')
-            os.system('make')
+            header('Copying firmware to the destination')
             os.system('cp -a build/firmware-combined.bin %s/cloudmanager_micropython_esp8266/firmware' % destdir)
 
 

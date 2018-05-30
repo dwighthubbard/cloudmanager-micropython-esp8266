@@ -13,7 +13,8 @@ if __name__ == '__main__':
             'cloudmanager_micropython_esp8266': ['firmware/*.bin'],
         },
         install_requires=[
-            'esptool>1.2.0',
+            'python_version>="3.6"',
+            'esptool>2.0.0',
             'micropython-cloudmanager',
             'netifaces'
         ],
@@ -24,6 +25,6 @@ if __name__ == '__main__':
         packages=['cloudmanager_micropython_esp8266'],
         scripts=['scripts/flash_esp_image', 'scripts/esp_terminal', 'scripts/configure_esp_image'],
         url='https://github.com/dwighthubbard/cloudmanager-micropython-esp8266',
-        version='1.8.6dev51',
+        version='1.8.6dev70',
         zip_safe=False
     )
