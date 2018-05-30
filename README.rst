@@ -8,7 +8,7 @@ set up the board to run cloudmanager or webrepl at start.
 Requirements
 ============
 
-This Utility requires python 2.7.9+ and is installed using the python pip package manager.
+This Utility requires python 3.6+ and is installed using the python pip package manager.
 
 Mac OSX requirements
 --------------------
