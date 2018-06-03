@@ -9,7 +9,7 @@ import serial.tools.list_ports
 import sys
 import time
 from collections import defaultdict
-from cloudmanager_micropython_esp8266 import FIRMWARE_FILE, determine_default_serial_port
+from cloudmanager_micropython_esp8266 import FIRMWARE_DIR, determine_default_serial_port, firmware_files
 
 
 FLASH_SIZE = '32m'
@@ -56,6 +56,7 @@ def send_serial_command(ser, command, echo=True):
     if isinstance(command, str):
         command = command.encode(encoding='ascii')
     ser.write(command + b'\r')
+    time.sleep(.5)
     result = ser.readline().decode(errors='ignore').strip()
     if echo:
         print(result, flush=True)
@@ -81,9 +82,10 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
     # line = ser.readlines()
     ser.write(b'\3\4\r')
 
-    print('** Waiting for prompt **')
+    print('** Waiting for prompt **', flush=True)
     time.sleep(.4)
     line = ser.readline()
+    time.sleep(2)
     # print(line.decode(errors='ignore'), end='')
     count = 0
     ser.write(b'\r')
@@ -99,17 +101,17 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
         if count > 60:
             raise NoResponse('Board configuraton failed')
 
-    print('** Found prompt **')
+    print('** Found prompt **', flush=True)
     line = ser.readline()
 
     while b'>>>' in line:
         line = ser.readline()
-    print(line.decode(), end='')
+    print(line.decode(), end='', flush=True)
 
     if not setting_dict['wifi_ssid']:
         return
 
-    print('** Creating the configuration directory **')
+    print('** Creating the configuration directory **', flush=True)
     send_serial_command(ser, 'import os')
     send_serial_command(ser, "os.mkdir('etc')")
 
@@ -122,64 +124,64 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
     if setting_dict.get('wifi_password', None):
         send_setting_command(ser, 'wifi_password', setting_dict['wifi_password'])
 
+    if setting_dict.get('name', None):
+        send_setting_command(ser, 'name', setting_dict['name'])
+
     if setting_dict.get('cloudmanager_server', None):
         send_setting_command(ser, 'redis_server', setting_dict['cloudmanager_server'])
 
     if setting_dict.get('cloudmanager_port', None):
         send_setting_command(ser, 'redis_port', setting_dict['cloudmanager_port'])
 
-    if setting_dict.get('name', None):
-        send_setting_command(ser, 'name', setting_dict['name'])
-
     if 'bootconfig' in setting_dict['services']:
         ser.write(b'import bootconfig.service\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
         ser.write(b'bootconfig.service.autostart()\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
     if 'cloudclient' in setting_dict['services']:
         ser.write(b'import redis_cloudclient.service\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
         ser.write(b'redis_cloudclient.service.autostart()\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
     if 'webrepl' in setting_dict['services']:
         ser.write(b'import webrepl_setup\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         ser.write(b'e\r')
 
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         time.sleep(.5)
 
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
         ser.write(args.webrepl_password + '\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         time.sleep(.5)
 
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         ser.write(args.webrepl_password + '\r')
 
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         time.sleep(.5)
 
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         ser.write('n\r')
         time.sleep(.5)
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
     if setting_dict['wifi_ssid'] and setting_dict['wifi_password']:
         ser.write(b'from bootconfig.device import configure_device\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
         ser.write(b'configure_device()\r')
-        print(ser.readline().decode(), end='')
+        print(ser.readline().decode(), end='', flush=True)
 
     time.sleep(1)
-    print('Resetting board')
+    print('Resetting board', flush=True)
     ser.write(b'\3\4\r')
-    print(ser.readline().decode(), end='')
+    print(ser.readline().decode(), end='', flush=True)
     # ser.write('import machine\r')
     # print(ser.readline(), end='')
     # ser.write('machine.reset()\r')
@@ -198,9 +200,9 @@ def send_settings_to_repl(setting_dict, baudrate=115200):
 
 
 def header(message):
-    print('*' * 80)
-    print(message)
-    print('*' * 80)
+    print('*' * 80, flush=True)
+    print(message, flush=True)
+    print('*' * 80, flush=True)
 
 
 def prompt(message):
@@ -223,7 +225,7 @@ if __name__ == '__main__':
     parser.add_argument('--board', default='nodemcu', choices=['nodemcu', 'wemosd1', 'huzzah'], help='Type of board being flashed')
     parser.add_argument('--flash_mode', default='qio', choices=['qio', 'dio'], help='Flash mode')
     parser.add_argument('--skip_erase', dest='erase', default=True, action='store_false', help='Skip the flash erase step')
-    parser.add_argument('--firmware_file', default=FIRMWARE_FILE, help='Firmware image file to flash')
+    parser.add_argument('--firmware_file', default=firmware_files()[0], choices=firmware_files(), help='Firmware image file to flash')
     settings = parser.add_argument_group('Settings')
     settings.add_argument('--wifi_ssid', default=None, help='Connect to a specific wifi network')
     settings.add_argument('--wifi_password', default=None, help='WPA passphrase for wifi')
@@ -233,7 +235,7 @@ if __name__ == '__main__':
     settings.add_argument(
         '--enable_service', dest='services', nargs='?', action='append',
         choices=['bootconfig', 'cloudclient', 'webrepl'],
-        help='Services to enable, default=[cloudclient]'
+        help='Services to enable, default=[bootconfig, cloudclient]'
     )
     settings.add_argument(
         '--disable_service', dest='disable_services', nargs='?', action='append',
@@ -270,6 +272,8 @@ if __name__ == '__main__':
         header('Erasing flash')
         erase_flash()
         print('Done\n')
+
+    args.firmware_file = os.path.join(FIRMWARE_DIR, args.firmware_file)
 
     header('Flashing board')
     command = os.path.dirname(sys.executable) + '/esptool.py --port {port} --baud {baud} write_flash --verify --flash_size={flash_size} --flash_mode={flash_mode} 0 {firmware_file}'.format(**vars(args))

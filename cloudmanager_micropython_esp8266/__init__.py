@@ -3,6 +3,7 @@ import serial.tools.list_ports
 
 
 FIRMWARE_FILE = os.path.join(os.path.dirname(__file__), 'firmware/firmware-combined.bin')
+FIRMWARE_DIR = os.path.join(os.path.dirname(__file__), 'firmware')
 KNOWN_SERIAL_DEVICES = ['/dev/ttyUSB0', 'dev/cu.SLAB_USBtoUART', '/dev/cu.wchusbserial', 'COM1']
 
 
@@ -19,3 +20,11 @@ def determine_default_serial_port():
             if device.startswith(known):
                 return device
     return device
+
+
+def firmware_files():
+    result = []
+    for filename in os.listdir(FIRMWARE_DIR):
+        result.append(os.path.join(filename))
+    result.sort()
+    return result
